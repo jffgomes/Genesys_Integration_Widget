@@ -21,17 +21,17 @@
             const headers = {
                 'Content-Type': 'application/x-www-form-urlencoded'
             };
-            
-            const data = new URLSearchParams({
+
+            const data = {
                 grant_type: 'client_credentials',
                 client_id: '74775787-df42-4722-9e04-42d30ac41d59',
                 client_secret: '25bIAqM2BzsdmdVERSmqrQ8JfflBvYrjxu2UgfpJPDE'
-            });
+            };
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers,
+                    // headers,
                     body: data.toString(),
                 });
                 const result = await response.json();
