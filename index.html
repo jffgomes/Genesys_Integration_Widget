@@ -46,9 +46,10 @@
         }
 
         async function getConversationDetails(conversationId, accessToken) {
-            const url = `https://api.sae1.pure.cloud/api/v2/analytics/conversations/${conversationId}`;
+            const url = `https://api.sae1.pure.cloud/api/v2/analytics/conversations/${conversationId}/details`;
             const headers = {
                 'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/json'
             };
 
             try {
