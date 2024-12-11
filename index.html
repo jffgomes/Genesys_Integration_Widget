@@ -19,23 +19,26 @@
         async function getAccessToken(clientId, clientSecret) {
             const url = 'https://login.sae1.pure.cloud/oauth/token';
             const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
             };
-
-            const data = {
+            const data = new URLSearchParams({
                 grant_type: 'client_credentials',
-                client_id: '74775787-df42-4722-9e04-42d30ac41d59',
-                client_secret: '25bIAqM2BzsdmdVERSmqrQ8JfflBvYrjxu2UgfpJPDE'
-            };
+                client_id: clientId,
+                client_secret: clientSecret,
+            });
 
             try {
                 const response = await fetch(url, {
                     method: 'POST',
-                    // headers,
+                    headers,
                     body: data.toString(),
                 });
                 const result = await response.json();
-                return result.access_token;
+                if (response.ok) {
+                    return result.access_token;
+                } else {
+                    throw new Error(result.error_description || 'Error fetching access token');
+                }
             } catch (error) {
                 console.error('Error fetching access token:', error);
                 throw error;
@@ -62,8 +65,8 @@
         }
 
         window.addEventListener('load', async () => {
-            const clientId = '74775787-df42-4722-9e04-42d30ac41d59';
-            const clientSecret = '25bIAqM2BzsdmdVERSmqrQ8JfflBvYrjxu2UgfpJPDE'; 
+            const clientId = '74775787-df42-4722-9e04-42d30ac41d59'; // Use environment variables in production
+            const clientSecret = '25bIAqM2BzsdmdVERSmqrQ8JfflBvYrjxu2UgfpJPDE'; // Use environment variables in production
             const conversationId = getQueryParam('conversationId');
             const conversationIdLabel = document.getElementById('conversationId');
             const output = document.getElementById('output');
