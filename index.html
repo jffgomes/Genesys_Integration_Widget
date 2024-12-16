@@ -1,93 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Genesys Client App</title>
+    <style>
+        /* Global styles */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.conversation-details {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* width: 300px; */
+    margin: auto;
+}
+
+.detail-item {
+    margin-bottom: 16px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333333;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.detail-value {
+    font-size: 16px;
+    font-weight: normal;
+    color: #007bff;
+    display: block;
+    word-wrap: break-word;
+}
+
+.detail-value:hover {
+    text-decoration: underline;
+}
+
+    </style>
 </head>
 <body>
     <h1>Customer Information</h1>
-    <label id="conversationIdLabel">Conversation ID: <span id="conversationId"></span></label>
-    <pre id="output"></pre>
+    <div class="conversation-details">
+        <div class="detail-item">
+            <label id="conversationIdLabel" for="conversationId">Conversation ID:</label>
+            <span id="conversationId" class="detail-value"></span>
+        </div>
+        <div class="detail-item">
+            <label id="userPhoneLabel" for="userphone">Telefone:</label>
+            <input id="userphone" class="detail-value"></input>
+        </div>
+        <div class="detail-item">
+            <label id="queueLabel" for="queue">Fila:</label>
+            <input id="queue" class="detail-value"></input>
+        </div>
+    </div>
+    <pre id="output" style="visibility: hidden;"></pre>
 
     <script>
-        function getQueryParam(param) {
+    const CLIENT_ID = '69693332-4588-40cd-9fc7-6f53b0f925ad';
+
+    // Genesys Cloud environment https://login.sae1.pure.cloud/oauth/authorize
+    const ENVIRONMENT = 'sae1.pure.cloud';
+
+function getParameterByName(name) {
+    name = name.replace(/[\\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\#&]" + name + "=([^&#]*)"),
+      results = regex.exec(location.hash);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
         }
 
-        async function getAccessToken(clientId, clientSecret) {
-            const url = 'https://login.sae1.pure.cloud/oauth/token';
-            const headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            };
-            const data = new URLSearchParams({
-                grant_type: 'client_credentials',
-                client_id: clientId,
-                client_secret: clientSecret,
-            });
+var conversationId = getQueryParam('conversationId')
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers,
-                    body: data.toString(),
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    return result.access_token;
-                } else {
-                    throw new Error(result.error_description || 'Error fetching access token');
-                }
-            } catch (error) {
-                console.error('Error fetching access token:', error);
-                throw error;
-            }
-        }
+if(window.location.hash) {
+    console.log(location.hash);
+    var token = getParameterByName('access_token');
 
-        async function getConversationDetails(conversationId, accessToken) {
-            const url = `https://api.sae1.pure.cloud/api/v2/analytics/conversations/${conversationId}/details`;
+    getConversationDetails(conversationId, token)
+
+    location.hash=''
+
+} else {
+
+    var queryStringData = {
+        response_type : "token",
+        client_id : CLIENT_ID,
+        redirect_uri : `https://jffgomes.github.io/teste`
+    }
+
+    // window.location.replace(`https://login.${ENVIRONMENT}/oauth/authorize?` + jQuery.param(queryStringData));
+}
+
+async function getConversationDetails(conversationId, accessToken) {
+            const url = `https://api.sae1.pure.cloud/api/v2/conversations`;
             const headers = {
                 'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/json'
             };
 
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers,
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error fetching conversation details:', error);
-                throw error;
-            }
-        }
-
-        window.addEventListener('load', async () => {
-            const clientId = '74775787-df42-4722-9e04-42d30ac41d59'; // Use environment variables in production
-            const clientSecret = '25bIAqM2BzsdmdVERSmqrQ8JfflBvYrjxu2UgfpJPDE'; // Use environment variables in production
-            const conversationId = getQueryParam('conversationId');
-            const conversationIdLabel = document.getElementById('conversationId');
+            const coversationid = document.getElementById('conversationId');
+            const queue = document.getElementById('queue');
+            const phone = document.getElementById('userphone');
             const output = document.getElementById('output');
 
-            if (!conversationId) {
-                output.textContent = 'Error: No conversation ID provided in the URL';
-                return;
-            }
+            // if (!conversationId) {
+            //     output.textContent = 'Error: No conversation ID provided in the URL';
+            //     return;
+            // } else {
 
-            conversationIdLabel.textContent = conversationId;
-            output.textContent = 'Loading...';
+                try {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'GET',
+                            headers,
+                        });
+                        const result = await response.json();
+                        console.log(result)
+                        coversationid.textContent = result["entities"][0]["id"]
+                        for (let index = 0; index < result["entities"][0]["participants"].length; index++) {
+                            const element = result["entities"][0]["participants"][index];
+                            if (element["purpose"] == "customer") {
+                                phone.value = element["address"]
+                            }
+                        }
 
-            try {
-                const accessToken = await getAccessToken(clientId, clientSecret);
-                const conversationDetails = await getConversationDetails(conversationId, accessToken);
-                output.textContent = JSON.stringify(conversationDetails, null, 2);
-            } catch (error) {
-                output.textContent = `Error: ${error.message}`;
+                        for (let index = 0; index < result["entities"][0]["participants"].length; index++) {
+                            const element = result["entities"][0]["participants"][index];
+                            if (element["purpose"] == "acd") {
+                                queue.value = element["name"]
+                            }
+                        }
+
+                        output.textContent = JSON.stringify(result, null, 2);
+                    }
+                    catch (error) {
+                        output.textContent = `Error: ${error.message}`;
+                    }
+
+                    // return result;
+                } catch (error) {
+                    console.error('Error fetching conversation details:', error);
+                    throw error;
+                }
             }
-        });
+        // }
+    
+
     </script>
 </body>
 </html>
